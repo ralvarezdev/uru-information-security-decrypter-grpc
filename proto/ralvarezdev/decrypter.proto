@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package ralvarezdev;
+
+import "google/protobuf/empty.proto";
+
+service Decrypter {
+  // List available files to decrypt
+  rpc ListFiles(google.protobuf.Empty) returns (ListFilesResponse);
+
+  // Decrypt a file using streaming
+  rpc DecryptFile(DecryptFileRequest) returns (stream DecryptFileResponse);
+}
+
+message ListFilesResponse {
+    repeated string filenames = 1;
+}
+
+message DecryptFileRequest {
+    string filename = 1;
+}
+
+message DecryptFileResponse {
+    bytes content = 1;
+}
