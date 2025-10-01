@@ -21,5 +21,6 @@ message DecryptFileRequest {
 }
 
 message DecryptFileResponse {
-    bytes content = 1;
+    bytes file_content = 1;
+    bytes certificate_content = 2;
 }
