@@ -22,5 +22,10 @@ message DecryptFileRequest {
 
 message DecryptFileResponse {
     bytes file_content = 1;
-    bytes certificate_content = 2;
+    string common_name = 2;
+    string organization = 3;
+    string organizational_unit = 4;
+    string country = 5;
+    string state = 6;
+    string locality = 7;
 }

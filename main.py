@@ -3,6 +3,8 @@ import os
 from concurrent import futures
 import grpc
 
+from cryptography import x509
+
 import ralvarezdev.decrypter_pb2 as decrypter_pb2
 import ralvarezdev.decrypter_pb2_grpc as decrypter_pb2_grpc
 
@@ -44,9 +46,27 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		cert_content = decrypt_file(cert_path, request.private_key)
 		file_content = decrypt_file(enc_path, request.private_key)
 
+		# Converted the certificate decrypted content to certificate object
+		cert = x509.load_pem_x509_certificate(cert_content)
+
+		# Extract the subject details from the certificate
+		subject = cert.subject
+		common_name = subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value
+		organization = subject.get_attributes_for_oid(x509.NameOID.ORGANIZATION_NAME)[0].value
+		organizational_unit = subject.get_attributes_for_oid(x509.NameOID.ORGANIZATIONAL_UNIT_NAME)[0].value
+		locality = subject.get_attributes_for_oid(x509.NameOID.LOCALITY_NAME)[0].value
+		state = subject.get_attributes_for_oid(x509.NameOID.STATE_OR_PROVINCE_NAME)[0].value
+		country = subject.get_attributes_for_oid(x509.NameOID.COUNTRY_NAME)[0].value
+		print(f'Decrypted file "{filename}" for {common_name}, {organization}, {organizational_unit}, {locality}, {state}, {country}')
+
 		yield decrypter_pb2.DecryptFileResponse(
 			file_content=file_content,
-			certificate_content=cert_content,
+			common_name=common_name,
+			organization=organization,
+			organizational_unit=organizational_unit,
+			locality=locality,
+			state=state,
+			country=country,
 		)
 
 def serve(host: str, port: int):
