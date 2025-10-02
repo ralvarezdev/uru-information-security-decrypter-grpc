@@ -8,8 +8,8 @@ from cryptography import x509
 import ralvarezdev.decrypter_pb2 as decrypter_pb2
 import ralvarezdev.decrypter_pb2_grpc as decrypter_pb2_grpc
 
-from ed25519 import data_path
-from ed25519.decryption import decrypt_file
+from crypto.ed25519 import data_path
+from crypto.ed25519 import decrypt_file
 
 
 class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):

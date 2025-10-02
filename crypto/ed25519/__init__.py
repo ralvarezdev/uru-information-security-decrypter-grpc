@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from ed25519.keys import load_private_key_from_file, load_public_key_from_file
+from crypto.ed25519.keys import load_private_key_from_file, load_public_key_from_file
 
 # Load environment variables from a .env file
 load_dotenv()
