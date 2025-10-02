@@ -1,8 +1,5 @@
 from typing import LiteralString
 
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives import hashes
-
 def decrypt_file(
 	file_path: LiteralString | str | bytes,
 	private_key,

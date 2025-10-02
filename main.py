@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 import os
 from concurrent import futures
-import grpc
+from microservice import grpc
 
 from cryptography import x509
 
@@ -11,7 +11,21 @@ import ralvarezdev.decrypter_pb2_grpc as decrypter_pb2_grpc
 from ed25519 import data_path
 from ed25519.decryption import decrypt_file
 
+
 class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
+	def SendEncryptedFile(self, request_iterator, context):
+		# Get the certificate bytes from metadata
+		cert_bytes = None
+		for key, value in context.invocation_metadata():
+			if key == 'certificate':
+				cert_bytes = value.encode('utf-8')
+				break
+		if not cert_bytes:
+			context.set_code(grpc.StatusCode.UNAUTHENTICATED)
+			context.set_details('Certificate metadata is required')
+			print("Missing certificate metadata")
+			return encrypter_pb2.Empty()
+
 	def ListFiles(self, request, context):
 		# List all encrypted files in data_path
 		files = [f for f in os.listdir(data_path) if f.endswith('.enc')]

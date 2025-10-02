@@ -1,0 +1,3 @@
+[submodule "certificate-grpc"]
+	path = certificate-grpc
+	url = https://github.com/ralvarezdev/uru-information-security-certificate-grpc
