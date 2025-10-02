@@ -5,12 +5,12 @@ package ralvarezdev;
 import "google/protobuf/empty.proto";
 
 service Decrypter {
-  rpc SendEncryptedFile(stream SendEncryptFileRequest) returns (google.protobuf.Empty);
+  rpc ReceiveEncryptedFile(stream ReceiveEncryptFileRequest) returns (google.protobuf.Empty);
   rpc ListCompanyFiles(google.protobuf.Empty) returns (ListCompanyFilesResponse);
   rpc DecryptFile(DecryptFileRequest) returns (stream DecryptFileResponse);
 }
 
-message SendEncryptFileRequest {
+message ReceiveEncryptFileRequest {
     string filename = 1;
     bytes content = 2;
     bytes content_hash = 3;
