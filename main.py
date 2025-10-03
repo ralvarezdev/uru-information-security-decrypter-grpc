@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
 import os
 from concurrent import futures
-from microservice import grpc
 
+import grpc
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 
