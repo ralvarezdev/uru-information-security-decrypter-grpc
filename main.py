@@ -255,7 +255,9 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		)
 		try:
 			cert_response = cert_client.GetPublicKeyByCommonName(
-				common_name=common_name,
+				certificate_pb2.GetPublicKeyByCommonNameRequest(
+					common_name=common_name,
+				)
 			)
 			public_key_bytes = cert_response.public_key
 		except grpc.RpcError as e:
