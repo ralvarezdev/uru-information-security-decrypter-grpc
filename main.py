@@ -8,6 +8,7 @@ import grpc
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 
+from google.protobuf.empty_pb2 import Empty
 import ralvarezdev.decrypter_pb2 as decrypter_pb2
 import ralvarezdev.decrypter_pb2_grpc as decrypter_pb2_grpc
 from database.psycopg.connection import (
@@ -51,12 +52,12 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			context.set_code(grpc.StatusCode.UNAUTHENTICATED)
 			context.set_details('Certificate metadata is required')
 			logger.error("Missing certificate metadata")
-			return decrypter_pb2.Empty()
+			return Empty()
 		if not encrypted_aes_256_key:
 			context.set_code(grpc.StatusCode.UNAUTHENTICATED)
 			context.set_details('Encrypted AES-256 key metadata is required')
 			logger.error("Missing encrypted AES-256 key metadata")
-			return decrypter_pb2.Empty()
+			return Empty()
 
 		# Create the gRPC client to validate the certificate
 		cert_client = create_grpc_client(
@@ -71,7 +72,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			context.set_code(e.code())
 			context.set_details(f'Certificate validation failed: {e.details()}')
 			logger.error(f'Certificate validation failed: {e.details()}')
-			return decrypter_pb2.Empty()
+			return Empty()
 
 		# Accumulate file chunks
 		encrypted_file_bytes = bytearray()
@@ -85,7 +86,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 				context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
 				context.set_details('Filename and encrypted_content are required')
 				logger.error("Invalid request: missing filename or encrypted_content")
-				return decrypter_pb2.Empty()
+				return Empty()
 
 			# Ensure all chunks belong to the same file
 			if not filename:
@@ -94,7 +95,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 				context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
 				context.set_details('All chunks must have the same filename')
 				logger.error("All chunks must have the same filename")
-				return decrypter_pb2.Empty
+				return Empty
 
 			# Ensure signature is consistent across chunks
 			if not signature:
@@ -103,7 +104,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 				context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
 				context.set_details('All chunks must have the same content_signature')
 				logger.error("All chunks must have the same content_signature")
-				return decrypter_pb2.Empty
+				return Empty
 
 			# Append chunk to the file bytes
 			encrypted_file_bytes.extend(request.encrypted_content)
@@ -148,7 +149,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			f_key.write(encrypted_aes_256_key)
 			logger.info(f'Saved encrypted AES-256 key file: {key_path}')
 
-		return decrypter_pb2.Empty()
+		return Empty()
 
 	def ListActiveFiles(self, request, context):
 		# List active files from the database
@@ -180,7 +181,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		if not request.filename or not request.common_name:
 			context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
 			context.set_details('Filename and common_name are required')
-			return decrypter_pb2.Empty()
+			return Empty()
 
 		# Remove the file metadata from the database
 		remove_encrypted_file(
@@ -196,7 +197,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		else:
 			logger.info(f'File not found for removal: {file_path}')
 
-		return decrypter_pb2.Empty()
+		return Empty()
 
 	def RemoveEncryptedFiles(self, request, context):
 		# Remove all file metadata from the database
@@ -212,7 +213,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		else:
 			logger.info(f'Data path not found for removal: {DATA_PATH}')
 
-		return decrypter_pb2.Empty()
+		return Empty()
 
 	def DecryptFile(self, request, context):
 		# Validate request
@@ -291,7 +292,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
 			context.set_details('Invalid file signature')
 			logger.error('Invalid file signature')
-			return decrypter_pb2.Empty()
+			return Empty()
 
 		# Return the decrypted file content by chunks
 		chunk_size = 1024 * 1024  # 1 MB
