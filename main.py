@@ -21,12 +21,14 @@ from microservice.grpc import (
 	CERTIFICATE_GRPC_PORT,
 )
 from microservice.grpc.certificate import create_grpc_client
-from crypto.ed25519 import (
-	TENDER_PRIVATE_KEY,
+from crypto import (
 	DATA_PATH,
 )
-from crypto.ed25519.decryption import decrypt_file
-from crypto.aes.encryption import decrypt_symmetric_key_with_private_key
+from crypto.rsa import 	TENDER_PRIVATE_KEY
+from crypto.aes.decryption import (
+	decrypt_symmetric_key_with_private_key,
+	decrypt_file_with_symmetric_key
+)
 from crypto.sha.signature import verify_signature
 
 # Configure logging

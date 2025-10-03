@@ -8,7 +8,7 @@ if errorlevel 1 (
 )
 
 REM Generate keys using OpenSSL
-echo Generating Ed25519 key pair...
-openssl genpkey -algorithm ed25519 -out tender_private_key.pem
+echo Generating RSA key pair...
+openssl genpkey -algorithm rsa -out tender_private_key.pem
 openssl pkey -in tender_private_key.pem -pubout -out tender_public_key.pem
 echo Keys generated: tender_private_key.pem and tender_public_key.pem
