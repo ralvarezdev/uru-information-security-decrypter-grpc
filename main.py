@@ -36,6 +36,23 @@ from crypto.sha.signature import verify_signature
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def validate_certificate_generator(cert_bytes: bytes, chunk_size: int = 4096):
+	"""
+	Generator that yields certificate chunks for gRPC streaming.
+
+	Args:
+		cert_bytes (bytes): The complete certificate content.
+		chunk_size (int): The size of each chunk in bytes. Default is 4096 bytes.
+
+	Yields:
+		certificate_pb2.ValidateCertificateRequest: The certificate chunk request.
+	"""
+	for i in range(0, len(cert_bytes), chunk_size):
+		chunk = cert_bytes[i:i + chunk_size]
+		yield decrypter_pb2.ValidateCertificateRequest(
+			certificate_content=chunk,
+		)
+
 class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 	def ReceiveEncryptedFile(self, request_iterator, context):
 		# Get the certificate bytes and AES-256 key from metadata
@@ -63,8 +80,9 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			port=CERTIFICATE_GRPC_PORT,
 		)
 		try:
+			# Validate the certificate by streaming its content
 			cert_client.ValidateCertificate(
-				certificate_content=cert_bytes,
+				validate_certificate_generator(cert_bytes)
 			)
 		except grpc.RpcError as e:
 			context.set_code(e.code())
