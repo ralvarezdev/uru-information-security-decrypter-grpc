@@ -193,6 +193,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 				)
 			)
 
+		logger.info(f'Listed {len(active_files)} active files from {len(company_files_list)} companies')
 		return decrypter_pb2.ListActiveFilesResponse(company_files=company_files_list)
 
 	def RemoveEncryptedFile(self, request, context):
