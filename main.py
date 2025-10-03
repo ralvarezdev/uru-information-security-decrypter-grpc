@@ -177,8 +177,8 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		# Organize files by company
 		company_files_dict = {}
 		for file in active_files:
-			common_name = file['common_name']
-			filename = file['filename']
+			common_name = file[0]
+			filename = file[1]
 			if common_name not in company_files_dict:
 				company_files_dict[common_name] = []
 			company_files_dict[common_name].append(filename)
