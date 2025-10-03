@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import os
 from concurrent import futures
+import logging
 
 import grpc
 from cryptography import x509
@@ -27,6 +28,9 @@ from crypto.ed25519.decryption import decrypt_file
 from crypto.aes.encryption import decrypt_symmetric_key_with_private_key
 from crypto.sha.signature import verify_signature
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 	def ReceiveEncryptedFile(self, request_iterator, context):
@@ -43,12 +47,12 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		if not cert_bytes:
 			context.set_code(grpc.StatusCode.UNAUTHENTICATED)
 			context.set_details('Certificate metadata is required')
-			print("Missing certificate metadata")
+			logger.error("Missing certificate metadata")
 			return decrypter_pb2.Empty()
 		if not encrypted_aes_256_key:
 			context.set_code(grpc.StatusCode.UNAUTHENTICATED)
 			context.set_details('Encrypted AES-256 key metadata is required')
-			print("Missing encrypted AES-256 key metadata")
+			logger.error("Missing encrypted AES-256 key metadata")
 			return decrypter_pb2.Empty()
 
 		# Create the gRPC client to validate the certificate
@@ -63,7 +67,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		except grpc.RpcError as e:
 			context.set_code(e.code())
 			context.set_details(f'Certificate validation failed: {e.details()}')
-			print(f'Certificate validation failed: {e.details()}')
+			logger.error(f'Certificate validation failed: {e.details()}')
 			return decrypter_pb2.Empty()
 
 		# Accumulate file chunks
@@ -77,7 +81,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			if not request.filename or not request.encrypted_content:
 				context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
 				context.set_details('Filename and encrypted_content are required')
-				print("Invalid request: missing filename or encrypted_content")
+				logger.error("Invalid request: missing filename or encrypted_content")
 				return decrypter_pb2.Empty()
 
 			# Ensure all chunks belong to the same file
@@ -86,7 +90,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			elif filename != request.filename:
 				context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
 				context.set_details('All chunks must have the same filename')
-				print("All chunks must have the same filename")
+				logger.error("All chunks must have the same filename")
 				return decrypter_pb2.Empty
 
 			# Ensure signature is consistent across chunks
@@ -95,7 +99,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			elif signature != request.content_signature:
 				context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
 				context.set_details('All chunks must have the same content_signature')
-				print("All chunks must have the same content_signature")
+				logger.error("All chunks must have the same content_signature")
 				return decrypter_pb2.Empty
 
 			# Append chunk to the file bytes
@@ -107,7 +111,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		# Get the details from the certificate
 		subject = cert.subject
 		common_name = subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)[0].value
-		print(f'Received file "{filename}" from {common_name}')
+		logger.info(f'Received file "{filename}" from {common_name}')
 
 		# Ensure company directory exists
 		company_dir = os.path.join(DATA_PATH, common_name)
@@ -123,7 +127,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		enc_path = os.path.join(company_dir, filename)
 		if os.path.exists(enc_path):
 			os.remove(enc_path)
-			print(f'Removed existing file: {enc_path}')
+			logger.warning(f'Removed existing file: {enc_path}')
 
 		# Write the encrypted file to disk
 		with open(enc_path, 'wb') as f_enc:
@@ -133,13 +137,13 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		sig_path = os.path.join(company_dir, filename + '.sig')
 		with open(sig_path, 'wb') as f_sig:
 			f_sig.write(signature)
-			print(f'Saved signature file: {sig_path}')
+			logger.info(f'Saved signature file: {sig_path}')
 
 		# Save the encrypted AES-256 key to a .key file
 		key_path = os.path.join(company_dir, filename + '.key')
 		with open(key_path, 'wb') as f_key:
 			f_key.write(encrypted_aes_256_key)
-			print(f'Saved encrypted AES-256 key file: {key_path}')
+			logger.info(f'Saved encrypted AES-256 key file: {key_path}')
 
 		return decrypter_pb2.Empty()
 
@@ -185,9 +189,9 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		file_path = os.path.join(DATA_PATH, request.common_name, request.filename)
 		if os.path.exists(file_path):
 			os.remove(file_path)
-			print(f'Removed file: {file_path}')
+			logger.info(f'Removed file: {file_path}')
 		else:
-			print(f'File not found for removal: {file_path}')
+			logger.info(f'File not found for removal: {file_path}')
 
 		return decrypter_pb2.Empty()
 
@@ -201,9 +205,9 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 				for file in files:
 					file_path = os.path.join(root, file)
 					os.remove(file_path)
-					print(f'Removed file: {file_path}')
+					logger.info(f'Removed file: {file_path}')
 		else:
-			print(f'Data path not found for removal: {DATA_PATH}')
+			logger.info(f'Data path not found for removal: {DATA_PATH}')
 
 		return decrypter_pb2.Empty()
 
@@ -233,7 +237,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		except grpc.RpcError as e:
 			context.set_code(e.code())
 			context.set_details(f'Failed to get public key: {e.details()}')
-			print(f'Failed to get public key: {e.details()}')
+			logger.error(f'Failed to get public key: {e.details()}')
 			return decrypter_pb2.DecryptFileResponse()
 
 		# Load the public key
@@ -245,7 +249,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		if not os.path.exists(enc_key_path):
 			context.set_code(grpc.StatusCode.NOT_FOUND)
 			context.set_details('Encrypted AES-256 key file not found')
-			print('Encrypted AES-256 key file not found')
+			logger.error('Encrypted AES-256 key file not found')
 			return decrypter_pb2.DecryptFileResponse()
 		with open(enc_key_path, 'rb') as f_key:
 			encrypted_aes_256_key = f_key.read()
@@ -261,7 +265,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		if not os.path.exists(enc_path):
 			context.set_code(grpc.StatusCode.NOT_FOUND)
 			context.set_details('Encrypted file not found')
-			print('Encrypted file not found')
+			logger.error('Encrypted file not found')
 			return decrypter_pb2.DecryptFileResponse()
 		with open(enc_path, 'rb') as f_enc:
 			encrypted_file_bytes = f_enc.read()
@@ -274,7 +278,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		if not os.path.exists(sig_path):
 			context.set_code(grpc.StatusCode.NOT_FOUND)
 			context.set_details('Signature file not found')
-			print('Signature file not found')
+			logger.error('Signature file not found')
 			return decrypter_pb2.DecryptFileResponse()
 		with open(sig_path, 'rb') as f_sig:
 			signature = f_sig.read()
@@ -283,7 +287,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		if not verify_signature(file_bytes, signature, public_key):
 			context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
 			context.set_details('Invalid file signature')
-			print('Invalid file signature')
+			logger.error('Invalid file signature')
 			return decrypter_pb2.Empty()
 
 		# Return the decrypted file content by chunks
@@ -292,6 +296,8 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			yield decrypter_pb2.DecryptFileResponse(
 				file_content=file_bytes[i:i + chunk_size],
 			)
+		logger.info(f'Successfully decrypted and sent file: {filename}')
+		return None
 
 
 def serve(host: str, port: int):
@@ -326,7 +332,7 @@ if __name__ == '__main__':
 		)
 	parser.add_argument('--port', type=int, help='Port to listen on')
 	args = parser.parse_args()
-	print(f'Starting server on {args.host}:{args.port}')
+	logger.info(f'Starting server on {args.host}:{args.port}')
 
 	# Start the gRPC server
 	serve(args.host, args.port)
