@@ -9,8 +9,9 @@ from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 
 from google.protobuf.empty_pb2 import Empty
-import ralvarezdev.decrypter_pb2 as decrypter_pb2
-import ralvarezdev.decrypter_pb2_grpc as decrypter_pb2_grpc
+from ralvarezdev import certificate_pb2
+from ralvarezdev import decrypter_pb2
+from ralvarezdev import decrypter_pb2_grpc
 from database.psycopg.connection import (
 	remove_encrypted_file,
 	remove_encrypted_files,
@@ -49,7 +50,7 @@ def validate_certificate_generator(cert_bytes: bytes, chunk_size: int = 4096):
 	"""
 	for i in range(0, len(cert_bytes), chunk_size):
 		chunk = cert_bytes[i:i + chunk_size]
-		yield decrypter_pb2.ValidateCertificateRequest(
+		yield certificate_pb2.ValidateCertificateRequest(
 			certificate_content=chunk,
 		)
 
