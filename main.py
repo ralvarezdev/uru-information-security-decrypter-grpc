@@ -44,10 +44,8 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		for key, value in context.invocation_metadata():
 			if key == 'certificate':
 				cert_bytes = base64.b64decode(value)
-				break
 			elif key == 'encrypted_aes_256_key':
 				encrypted_aes_256_key = bytes.fromhex(value)
-				break
 		if not cert_bytes:
 			context.set_code(grpc.StatusCode.UNAUTHENTICATED)
 			context.set_details('Certificate metadata is required')
