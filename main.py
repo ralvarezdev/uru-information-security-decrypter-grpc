@@ -274,7 +274,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			encrypted_file_bytes = f_enc.read()
 
 		# Decrypt the file content with the decrypted AES-256 key
-		file_bytes = decrypt_file(encrypted_file_bytes, decrypted_key)
+		file_bytes = decrypt_file_with_symmetric_key(encrypted_file_bytes, decrypted_key)
 
 		# Load the signature
 		sig_path = os.path.join(company_dir, filename + '.sig')
