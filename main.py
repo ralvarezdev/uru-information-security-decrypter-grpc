@@ -76,7 +76,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			return Empty()
 
 		# Create the gRPC client to validate the certificate
-		cert_client = create_grpc_client(
+		channel, cert_client = create_grpc_client(
 			host=CERTIFICATE_GRPC_HOST,
 			port=CERTIFICATE_GRPC_PORT,
 		)
@@ -90,6 +90,8 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			context.set_details(f'Certificate validation failed: {e.details()}')
 			logger.error(f'Certificate validation failed: {e.details()}')
 			return Empty()
+		finally:
+			channel.close()
 
 		# Accumulate file chunks
 		encrypted_file_bytes = bytearray()
@@ -246,7 +248,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			return decrypter_pb2.DecryptFileResponse()
 
 		# Request the public key from the certificate microservice
-		cert_client = create_grpc_client(
+		channel, cert_client = create_grpc_client(
 			host=CERTIFICATE_GRPC_HOST,
 			port=CERTIFICATE_GRPC_PORT,
 		)
@@ -260,6 +262,8 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 			context.set_details(f'Failed to get public key: {e.details()}')
 			logger.error(f'Failed to get public key: {e.details()}')
 			return decrypter_pb2.DecryptFileResponse()
+		finally:
+			channel.close()
 
 		# Load the public key
 		public_key = serialization.load_pem_public_key(public_key_bytes)
