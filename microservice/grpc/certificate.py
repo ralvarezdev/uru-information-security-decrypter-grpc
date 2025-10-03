@@ -1,4 +1,4 @@
-from microservice import grpc
+import grpc
 
 import ralvarezdev.certificate_pb2_grpc as certificate_pb2_grpc
 
