@@ -6,23 +6,29 @@ import "google/protobuf/empty.proto";
 
 service Decrypter {
   rpc ReceiveEncryptedFile(stream ReceiveEncryptFileRequest) returns (google.protobuf.Empty);
-  rpc ListCompanyFiles(google.protobuf.Empty) returns (ListCompanyFilesResponse);
+  rpc RemoveEncryptedFile(RemoveEncryptedFileRequest) returns (google.protobuf.Empty);
+  rpc RemoveEncryptedFiles(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc ListActiveFiles(google.protobuf.Empty) returns (ListActiveFilesResponse);
   rpc DecryptFile(DecryptFileRequest) returns (stream DecryptFileResponse);
 }
 
 message ReceiveEncryptFileRequest {
     string filename = 1;
-    bytes content = 2;
-    bytes content_hash = 3;
-    bytes encrypted_aes_256_key = 4;
+    bytes encrypted_content = 2;
+    bytes content_signature = 3;
+}
+
+message RemoveEncryptedFileRequest {
+    string filename = 1;
+    string common_name = 2;
 }
 
 message CompanyFiles {
-    string company_name = 1;
+    string common_name = 1;
     repeated string filenames = 2;
 }
 
-message ListCompanyFilesResponse {
+message ListActiveFilesResponse {
     repeated CompanyFiles company_files = 1;
 }
 
@@ -32,10 +38,4 @@ message DecryptFileRequest {
 
 message DecryptFileResponse {
     bytes file_content = 1;
-    string common_name = 2;
-    string organization = 3;
-    string organizational_unit = 4;
-    string country = 5;
-    string state = 6;
-    string locality = 7;
 }

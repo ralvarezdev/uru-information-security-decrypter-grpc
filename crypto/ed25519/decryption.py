@@ -1,12 +1,12 @@
 def decrypt_file(
-	file_bytes: bytes,
+	encrypted_file_bytes: bytes,
 	private_key,
 ) -> bytes:
 	"""
 	Decrypt a file using the provided private key.
 
 	Args:
-		file_bytes: The file content to decrypt.
+		encrypted_file_bytes: The encrypted file content to decrypt.
 		private_key: Private key to use for decryption.
 
 	Returns:
@@ -14,6 +14,6 @@ def decrypt_file(
 	"""
 	# Decrypt the file using ED25519 private key
 	decrypted = private_key.decrypt(
-		file_bytes,
+		encrypted_file_bytes,
 	)
 	return decrypted

@@ -24,54 +24,66 @@ def create_connection():
 		print(f"An error occurred while connecting to the database: {e}")
 		return None
 
-def upsert_organization_key(common_name: str, key_value: bytes) -> bool:
-	"""Call the upsert_organization_key function in PostgreSQL.
+def remove_encrypted_file(filename: str, common_name: str):
+	"""
+	Mark an encrypted file as removed in the database.
 
 	Args:
-		common_name (str): The common name associated with the organization key.
-		key_value (bytes): The organization key value.
-
-	Returns:
-		bool: True if the operation was successful, False otherwise.
+		filename (str): The name of the file to remove.
+		common_name (str): The common name associated with the file.
 	"""
 	with create_connection() as conn:
 		with conn.cursor() as cur:
 			try:
-				cur.execute(
-					"SELECT upsert_organization_key(%s, %s);",
-					(common_name, key_value)
-				)
+				cur.callproc('remove_encrypted_file', (filename, common_name))
 				conn.commit()
-				print(f"Upserted organization key for common name: {common_name}")
-				return True
+				print(f"File {filename} marked as removed.")
 			except Exception as e:
-				conn.rollback()
-				print(f"An error occurred while upserting the organization key: {e}")
-				return False
+				print(f"An error occurred while removing the file: {e}")
 
-def get_active_organization_key(common_name: str) -> bytes | None:
-	"""Retrieve the organization key for a given common name from PostgreSQL.
-
-	Args:
-		common_name (str): The common name associated with the organization key.
-
-	Returns:
-		bytes | None: The organization key value if found, None otherwise.
+def remove_encrypted_files():
+	"""
+	Mark all encrypted files as removed in the database.
 	"""
 	with create_connection() as conn:
 		with conn.cursor() as cur:
 			try:
-				cur.execute(
-					"SELECT get_active_organization_key(%s);",
-					(common_name,)
-				)
-				result = cur.fetchone()
-				if result and result[0]:
-					print(f"Retrieved organization key for common name: {common_name}")
-					return result[0]
-				else:
-					print(f"No active organization key found for common name: {common_name}")
-					return None
+				cur.callproc('remove_encrypted_files')
+				conn.commit()
+				print("All files marked as removed.")
 			except Exception as e:
-				print(f"An error occurred while retrieving the organization key: {e}")
-				return None
+				print(f"An error occurred while removing the files: {e}")
+
+def add_encrypted_file(filename: str, common_name: str):
+	"""
+	Add a new encrypted file to the database.
+
+	Args:
+		filename (str): The name of the file to add.
+		common_name (str): The common name associated with the file.
+	"""
+	with create_connection() as conn:
+		with conn.cursor() as cur:
+			try:
+				cur.callproc('add_encrypted_file', (filename, common_name))
+				conn.commit()
+				print(f"File {filename} added successfully.")
+			except Exception as e:
+				print(f"An error occurred while adding the file: {e}")
+
+def list_active_files():
+	"""
+	List all active (not removed) encrypted files from the database.
+
+	Returns:
+		list of tuples: A list of tuples containing file names and their upload timestamps.
+	"""
+	with create_connection() as conn:
+		with conn.cursor() as cur:
+			try:
+				cur.execute('SELECT * FROM list_active_files()')
+				files = cur.fetchall()
+				return files
+			except Exception as e:
+				print(f"An error occurred while listing the files: {e}")
+				return []
