@@ -39,7 +39,7 @@ class DecrypterServicer(decrypter_pb2_grpc.DecrypterServicer):
 		encrypted_aes_256_key = None
 		for key, value in context.invocation_metadata():
 			if key == 'certificate':
-				cert_bytes = value.decode('utf-8')
+				cert_bytes = value.encode('utf-8')
 				break
 			elif key == 'encrypted_aes_256_key':
 				encrypted_aes_256_key = bytes.fromhex(value)
