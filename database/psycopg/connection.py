@@ -40,7 +40,10 @@ def remove_encrypted_file(filename: str, common_name: str):
 	with create_connection() as conn:
 		with conn.cursor() as cur:
 			try:
-				cur.callproc('remove_encrypted_file', (filename, common_name))
+				cur.execute(
+					"CALL remove_encrypted_file(%s, %s);",
+					(filename, common_name),
+				)
 				conn.commit()
 				logger.info(f"File {filename} marked as removed.")
 			except Exception as e:
@@ -53,7 +56,9 @@ def remove_encrypted_files():
 	with create_connection() as conn:
 		with conn.cursor() as cur:
 			try:
-				cur.callproc('remove_encrypted_files')
+				cur.execute(
+					"CALL remove_encrypted_files();",
+				)
 				conn.commit()
 				logger.info("All files marked as removed.")
 			except Exception as e:
@@ -70,7 +75,10 @@ def add_encrypted_file(filename: str, common_name: str):
 	with create_connection() as conn:
 		with conn.cursor() as cur:
 			try:
-				cur.callproc('add_encrypted_file', (filename, common_name))
+				cur.execute(
+					"CALL add_encrypted_file(%s, %s);",
+					(filename, common_name),
+				)
 				conn.commit()
 				logger.info(f"File {filename} added successfully.")
 			except Exception as e:
